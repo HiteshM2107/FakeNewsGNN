@@ -11,11 +11,6 @@ venv/
 # OS files
 .DS_Store
 
-# Large data
-data/raw/
-data/processed/pyg_graph.pt
-data/processed/graph.pkl
-
 # Embedding models (if any)
 sentence-transformers/
 
