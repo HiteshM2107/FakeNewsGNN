@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+env/
+venv/
+.venv/
+*.env
+
+# OS files
+.DS_Store
+
+# Large data
+data/raw/
+data/processed/pyg_graph.pt
+data/processed/graph.pkl
+
+# Embedding models (if any)
+sentence-transformers/
+
+# Checkpoints
+checkpoints/
+
+# Results and plots
+results/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Conda environments
+*.yaml
