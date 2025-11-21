@@ -13,179 +13,196 @@ This project applies Graph Neural Networks (GNNs) to the task of fake news class
 
 Unlike traditional NLP models that treat each article independently, this project builds a semantic similarity graph between news articles and uses GNNs to exploit relational structure — improving classification accuracy by leveraging inter-article connections.
 
-Project Pipeline
+## Project Pipeline
 
-The project consists of the following stages:
+The project consists of the following stages.
 
-1. Data Preprocessing
+### 1. Data Preprocessing
+- Loads PolitiFact real/fake CSV files.
+- Cleans missing text/title fields.
+- Produces a standardized `posts.csv` with:
+  - `text`
+  - `title`
+  - `label`
+  - `content` (combined field).
 
-Loads PolitiFact real/fake news CSV files.
+### 2. Graph Construction
+- Uses the MiniLM Sentence Transformer to generate embeddings.
+- Computes cosine similarity between all articles.
+- Builds an undirected graph where:
+  - Nodes = articles  
+  - Edges = similarity > threshold  
+- Saves the graph as a NetworkX object: `graph.pkl`.
 
-Cleans missing text/title fields.
+### 3. PyTorch Geometric Conversion
+- Loads `graph.pkl`.
+- Converts it to a PyTorch Geometric `Data` object.
+- Adds:
+  - `x` = embeddings  
+  - `edge_index`  
+  - `y` = labels  
+- Saves the PyG graph as `pyg_graph.pt`.
 
-Produces a standardized posts.csv with:
+### 4. GNN Training (GCN, GraphSAGE, GAT)
+Trains and compares three GNN architectures:
+- GCN  
+- GraphSAGE  
+- GAT  
 
-text
+For each model, the training script:
+- Splits nodes into train (70%), validation (15%), and test (15%).
+- Tracks:
+  - Training loss
+  - Training accuracy
+  - Validation accuracy
+  - Test accuracy
+- Saves:
+  - Confusion matrix
+  - Classification report
+  - Training curves (loss / accuracy)
+  - Best model checkpoint
 
-title
+Outputs are written to:
+- `results/`
+- `checkpoints/`
 
-label
+### 5. Embedding Visualization
+- Uses t-SNE to reduce hidden GNN embeddings to 2D.
+- Produces a scatter plot showing separation between fake vs. real news.
 
-content (combined field)
+---
 
-2. Graph Construction
+## Project Structure
 
-Uses the MiniLM Sentence Transformer to generate embeddings.
-
-Computes cosine similarity between all articles.
-
-Creates an undirected graph with:
-
-Nodes = articles
-
-Edges = similarity > threshold
-
-Saves result as a NetworkX graph (graph.pkl).
-
-3. PyTorch Geometric Conversion
-
-Loads graph.pkl
-
-Converts to PyG Data object
-
-Inserts:
-
-x = embeddings
-
-edge_index
-
-y = labels
-
-Saves as pyg_graph.pt
-
-4. GNN Training (Three Models)
-
-Trains and compares:
-
-GCN
-
-GraphSAGE
-
-GAT
-
-Each model logs:
-
-Train accuracy
-
-Validation accuracy
-
-Test accuracy
-
-Confusion matrix
-
-Classification report
-
-Training curves
-
-Stored in:
-
-results/
-
-checkpoints/
-
-5. Embedding Visualization
-
-Uses t-SNE to visualize hidden GNN embeddings.
-
-Helps show separation between fake and real news clusters.
-
-Project Structure
+```text
 CSE841_FakeNewsGNN/
 │
 ├── data/
-│   ├── raw/                      
+│   ├── raw/
 │   └── processed/
-│       ├── posts.csv             
-│       ├── graph.pkl             
-│       └── pyg_graph.pt          
+│       ├── posts.csv
+│       ├── graph.pkl
+│       └── pyg_graph.pt
 │
 ├── src/
-│   ├── build_graph.py            
-│   ├── to_pyg.py                 
-│   ├── train_gnn.py              
-│   ├── tsne_embeddings.py        
-│   └── models_gnn.py             
+│   ├── build_graph.py
+│   ├── to_pyg.py
+│   ├── train_gnn.py
+│   ├── tsne_embeddings.py
+│   └── models_gnn.py
 │
-├── results/                      
-├── checkpoints/                  
+├── results/
+├── checkpoints/
 │
-├── FakeNews_GNN_Notebook.ipynb   
-├── environment.yml               
+├── FakeNews_GNN_Notebook.ipynb
+├── environment.yml
 └── README.md
 
-How to Run the Project
-1. Create and activate conda environment
+## How to Run the Project
+
+### Step 1 — Create and activate a conda environment
+```bash
 conda create -n cse841 python=3.10
 conda activate cse841
+```
 
-
-Install required libraries:
-
+### Step 2 — Install dependencies
+```bash
 python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 python -m pip install pandas numpy==1.26.4 scikit-learn networkx matplotlib sentence-transformers torch-geometric tqdm
+```
 
-2. Build the similarity graph
+### Step 3 — Build the similarity graph
+```bash
 python src/build_graph.py
+```
+This will:
+- Load `data/processed/posts.csv`
+- Generate sentence embeddings
+- Compute cosine similarity
+- Build the similarity graph
+- Save `data/processed/graph.pkl`
 
-3. Convert to PyTorch Geometric
+### Step 4 — Convert to PyTorch Geometric format
+```bash
 python src/to_pyg.py
+```
+This will:
+- Load `graph.pkl`
+- Load `posts.csv`
+- Build `data.x`, `data.edge_index`, `data.y`
+- Save `data/processed/pyg_graph.pt`
 
-4. Train all GNN models
+### Step 5 — Train all GNN models (GCN, GraphSAGE, GAT)
+```bash
 python src/train_gnn.py
+```
+This script will:
+- Create train/validation/test node splits
+- Train **GCN**, **GraphSAGE**, and **GAT**
+- Save:
+  - Training curves in `results/*.png`
+  - Confusion matrices and classification reports in `results/*_report.txt`
+  - Best model checkpoints in `checkpoints/*.pt`
+- Print a final comparison table with validation and test accuracy for each model
 
-5. Visualize embeddings using t-SNE
+### Step 6 — Visualize t-SNE embeddings
+```bash
 python src/tsne_embeddings.py
+```
+This will:
+- Load the best checkpoint (default: **GAT**)
+- Extract hidden embeddings using `get_embeddings`
+- Run t-SNE (2D)
+- Save the plot to `results/GAT_tsne.png` (or the corresponding model name)
 
-Results Summary (Example)
-Model	Val Accuracy	Test Accuracy
-GCN	0.81	0.79
-GraphSAGE	0.85	0.83
-GAT	0.88	0.86
+---
 
-(Your actual results may vary.)
+## Results Summary (Example)
 
-Key Insights
+| Model      | Val Accuracy | Test Accuracy |
+|------------|--------------|---------------|
+| GCN        | 0.81         | 0.79          |
+| GraphSAGE  | 0.85         | 0.83          |
+| GAT        | 0.88         | 0.86          |
 
-Graph-based approaches outperform independent text classification by modeling relationships between articles.
+*Actual results may vary with threshold, hyperparameters, and data.*
 
-GAT tends to achieve the best performance due to attention-based aggregation.
+---
 
-t-SNE plots show clear separation between real and fake news in the learned embedding space.
+## Key Insights
 
-Technologies Used
+- Graph-based approaches outperform independent text classification by modeling inter-article relationships.
+- GraphSAGE improves on GCN via flexible neighborhood aggregation.
+- GAT often performs best by attending to important neighbors.
+- t-SNE visualizations reveal clear separation between classes in learned embeddings.
 
-Python 3.10
+---
 
-PyTorch
+## Technologies Used
 
-PyTorch Geometric
+- Python 3.10  
+- PyTorch  
+- PyTorch Geometric  
+- NetworkX  
+- Sentence Transformers  
+- scikit-learn  
+- matplotlib
 
-NetworkX
+---
 
-Sentence Transformers
+## Acknowledgements
 
-scikit-learn
+**Dataset**  
+FakeNewsNet: A Data Repository with News Content, Social Context and Spatiotemporal Information (PolitiFact subset).
 
-matplotlib
+**Key Modeling References**  
+Kipf & Welling — Semi-Supervised Classification with Graph Convolutional Networks (GCN)  
+Hamilton et al. — Inductive Representation Learning on Large Graphs (GraphSAGE)  
+Velicković et al. — Graph Attention Networks (GAT)
 
-Acknowledgements
+---
 
-Dataset Source:
-FakeNewsNet: A Data Repository with News Content, Social Context and Spatiotemporal Information.
+## License
 
-Modeling References:
-Kipf & Welling (2017), Hamilton et al. (2017), Velicković et al. (2018)
-
-License
-
-This project is released for academic use only (CSE 841 Artificial Intelligence).
+This project is provided for academic use only as part of **CSE 841 Artificial Intelligence**.
