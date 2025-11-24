@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def preprocess_politifact(base_path="../data/raw/politifact/"):
+def preprocess_politifact(base_path="data/raw/politifact/"):
     fake_path = os.path.join(base_path, "fake", "politifact_fake.csv")
     real_path = os.path.join(base_path, "real", "politifact_real.csv")
 
