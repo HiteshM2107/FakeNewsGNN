@@ -40,7 +40,7 @@ Output: `data/processed/pyg_graph.pt`
 
 ## 4. Baseline Model Training
 
-Trains baseline ML models (Logistic Regression, SVM, Random Forest, Gradient Boosting).
+Trains baseline ML models (Logistic Regression and SVM).
 
 Outputs:
 `results/baselines.json`
